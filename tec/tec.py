@@ -27,11 +27,14 @@ class TEC:
         # Data
         self.obsFile = []
         self.navFile = []
+        self.biasFile = []
         self.receiverPos = []
         self.numObs = []
         self.numObsTrim = []
-        # Relevant signals
+        # Relevant signals and respective bias
         self.L1 = []
+        self.L1bias = []
+        self.L2bias = []
         self.L2 = []
         self.P1 = []
         self.P2 = []
@@ -64,27 +67,45 @@ class TEC:
         self.key = []
         self.group = []
         self.elevationMask = []
+        #Arc management
+        self.arcIndices = []
+        self.arcs = []
     
     def loadObsFile(self, obsFile, satellite):
         self.obsFile = obsFile.sel(sv=satellite).dropna(dim='time',how='all')
     
     def loadNavFile(self, navFile, satellite):
         self.navFile = navFile.sel(sv=satellite).dropna(dim='time',how='all')
+        
+    def loadBiasFile(self, biasFile, satellite):
+        biasValue = np.genfromtxt(biasFile, dtype=float, skip_header=69, skip_footer=2, usecols=(7))
+        biasLabel = np.genfromtxt(biasFile,dtype=str, skip_header=69, skip_footer=2, usecols=(2,3))
+        biasValue = biasValue.reshape(len(biasValue),1)
+        self.biasFile = np.concatenate((biasLabel, biasValue),axis=1)
+        C1C = [line for line in self.biasFile if satellite in line and 'C1C' in line]
+        self.L1bias = float(C1C[0][2])
+        C2C = [line for line in self.biasFile if satellite in line and 'C2C' in line]
+        self.L2bias = float(C2C[0][2])
     
-    def loadData(self, obsFile, navFile, satellite, receiverPos, eph):
+    def loadData(self, obsFile, navFile, biasFile, satellite, receiverPos, eph):
         self.receiverPos = np.array(receiverPos)
         self.loadObsFile(obsFile, satellite)
         self.loadNavFile(navFile, satellite)
+        self.loadBiasFile(biasFile, satellite)
         self.numObs = len(self.obsFile.L1.data)
-        self.x = np.zeros(self.numObs, dtype = float)
-        self.y = np.zeros(self.numObs, dtype = float)
-        self.z = np.zeros(self.numObs, dtype = float)
-        self.height = np.zeros(self.numObs, dtype = float)
-        self.elevation = np.zeros(self.numObs, dtype = float)
-        self.distance = np.zeros(self.numObs, dtype = float)
-        self.azimuth = np.zeros(self.numObs, dtype = float)
-        self.TECcp = np.zeros(self.numObs, dtype = float)
-        self.TECpr = np.zeros(self.numObs, dtype = float)
+        self.x = np.zeros([self.numObs,1], dtype = float)
+        self.y = np.zeros([self.numObs,1], dtype = float)
+        self.z = np.zeros([self.numObs,1], dtype = float)
+        self.height = np.zeros([self.numObs,1], dtype = float)
+        self.elevation = np.zeros([self.numObs,1], dtype = float)
+        self.distance = np.zeros([self.numObs,1], dtype = float)
+        self.azimuth = np.zeros([self.numObs,1], dtype = float)
+        self.TECcp = np.zeros([self.numObs,1], dtype = float)
+        self.TECpr = np.zeros([self.numObs,1], dtype = float)
+        self.L1 = np.zeros([self.numObs,1], dtype = float)
+        self.L2 = np.zeros([self.numObs,1], dtype = float)
+        self.P1 = np.zeros([self.numObs,1], dtype = float)
+        self.P2 = np.zeros([self.numObs,1], dtype = float)
         eph.loadEph(navFile, satellite)
 
     def extractObsData(self) -> None:
@@ -276,19 +297,32 @@ class TEC:
         None.
 
         """
+        flag = True
+        
+        for idx, elv in enumerate(self.elevation):
+            if elv > threshold and flag:
+                pass
+                
         self.mask = self.elevation > threshold
         self.mask.astype(np.int)
         self.numObsTrim = np.sum(self.mask)
+        # arrays = np.split(num_arr, np.where(num_arr[:-1] == 5)[0]+1)
+        
+        # self.arcIndices = np.searchsorted(self.elevation, [threshold, threshold, threshold]) 
         
         self.elevationMasked = self.elevation[self.mask]
+        
         # self.elevationMasked = np.array(compress(self.elevation, self.mask))
         self.elevationMask = np.array([self.mask.T, self.elevation.T])
-        for key, group in groupby(self.elevationMask, lambda x : x[0]):
-            self.key.append(key)
-            self.group.append(group)
+        
+        #for key, group in groupby(self.elevationMask, lambda x : x[0]):
+        #    self.key.append(key)
+        #    self.group.append(group)
         
         
         self.computeOffset(threshold)
+        self.arcs = np.split(self.elevation, self.arcStartIndex)
+        
         for i, off in enumerate(self.offset):
             self.TECr.append(self.TECcp[self.arcStartIndex[i]: \
                                         self.arcEndIndex[i]] + off)

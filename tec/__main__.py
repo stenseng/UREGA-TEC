@@ -13,12 +13,16 @@ import matplotlib.pyplot as plt
 
 # READING FILES
 dataPath = "F:/Space/RINEX files/Rinex2\\"
+dcbPath = "F:/Space/TEC/Bias\\"
 navFile = "klsq3070.21n"
 obsFile = "klsq3070.21o"
+dcbFile = "COD21824.BIA"
 
 obs = gr.load(dataPath + obsFile, use='G')
 nav = gr.load(dataPath + navFile, use='G')
-hdr = gr.rinexheader(dataPath + obsFile)
+bias = dcbPath + dcbFile
+hdr = gr.rinexheader(dataPath + obsFile)   
+
 receiverPos = np.array(hdr["position"])
 sat = 'G27'
 tec = {}
@@ -26,7 +30,7 @@ eph = {}
 
 tec[sat] = TEC()
 eph[sat] = Eph()
-tec[sat].loadData(obs, nav, sat, receiverPos, eph[sat])
+tec[sat].loadData(obs, nav, bias , sat, receiverPos, eph[sat])
 tec[sat].getRelativeTEC(eph[sat])
 tec[sat].offsetCorrectedTEC(threshold=math.radians(20))
 tec[sat].getVerticalTEC()
@@ -189,7 +193,7 @@ plt.setp(ax.get_xticklabels(), rotation=35)
 plt.show()
 
 ax = plt.subplot()
-ax.plot(tec[sat].obsFile.time, tec[sat].elevation, "ob")
+ax.plot(tec[sat].obsFile.time, np.degrees(tec[sat].elevation[:]), "ob")
 plt.setp(ax.get_xticklabels(), rotation=35)
 plt.show()
 
