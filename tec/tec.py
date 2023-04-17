@@ -93,19 +93,20 @@ class TEC:
         self.loadNavFile(navFile, satellite)
         self.loadBiasFile(biasFile, satellite)
         self.numObs = len(self.obsFile.L1.data)
-        self.x = np.zeros([self.numObs,1], dtype = float)
-        self.y = np.zeros([self.numObs,1], dtype = float)
-        self.z = np.zeros([self.numObs,1], dtype = float)
-        self.height = np.zeros([self.numObs,1], dtype = float)
-        self.elevation = np.zeros([self.numObs,1], dtype = float)
-        self.distance = np.zeros([self.numObs,1], dtype = float)
-        self.azimuth = np.zeros([self.numObs,1], dtype = float)
-        self.TECcp = np.zeros([self.numObs,1], dtype = float)
-        self.TECpr = np.zeros([self.numObs,1], dtype = float)
-        self.L1 = np.zeros([self.numObs,1], dtype = float)
-        self.L2 = np.zeros([self.numObs,1], dtype = float)
-        self.P1 = np.zeros([self.numObs,1], dtype = float)
-        self.P2 = np.zeros([self.numObs,1], dtype = float)
+        self.x = np.zeros([self.numObs, 1], dtype=float)
+        self.y = np.zeros([self.numObs, 1], dtype=float)
+        self.z = np.zeros([self.numObs, 1], dtype=float)
+        self.height = np.zeros([self.numObs, 1], dtype=float)
+        self.elevation = np.zeros([self.numObs, 1], dtype=float)
+        self.distance = np.zeros([self.numObs, 1], dtype=float)
+        self.azimuth = np.zeros([self.numObs, 1], dtype=float)
+        self.TECcp = np.zeros([self.numObs, 1], dtype=float)
+        self.TECpr = np.zeros([self.numObs, 1], dtype=float)
+        self.L1 = np.zeros([self.numObs,1], dtype=float)
+        self.L2 = np.zeros([self.numObs, 1], dtype=float)
+        self.P1 = np.zeros([self.numObs, 1], dtype=float)
+        self.P2 = np.zeros([self.numObs, 1], dtype=float)
+        self.extractObsData()
         eph.loadEph(navFile, satellite)
 
     def extractObsData(self) -> None:
@@ -147,7 +148,7 @@ class TEC:
         None.
 
         """
-        self.extractObsData()
+    
         for index, t in enumerate(self.obsFile.time.data):
             x_temp, y_temp, z_temp = eph.getXYZ(t, self.P1[index])
             e, a, d = eph.getEAD(x_temp, y_temp, z_temp, self.receiverPos)

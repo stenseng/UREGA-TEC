@@ -12,8 +12,8 @@ from tec import TEC
 import matplotlib.pyplot as plt
 
 # READING FILES
-dataPath = "F:/Space/RINEX files/Rinex2\\"
-dcbPath = "F:/Space/TEC/Bias\\"
+dataPath = "F:/Space/RINEX files/Rinex2/"
+dcbPath = "F:/Space/TEC/Bias/"
 navFile = "klsq3070.21n"
 obsFile = "klsq3070.21o"
 dcbFile = "COD21824.BIA"
@@ -63,7 +63,7 @@ plt.plot(tec[sat].obsFile.time[tec[sat].arcStartIndex[1]:tec[sat].arcEndIndex[1]
          tec[sat].TECv[len(tec[sat].TECr[0]):(len(tec[sat].TECr[0])+len(tec[sat].TECr[1]))],'m')
 plt.show()
 
-# %%
+#%%
 satellites = obs.sv.data
 tec = {}
 eph = {}
@@ -72,7 +72,7 @@ for sat in satellites:
     print(sat)
     tec[sat] = TEC()
     eph[sat] = Eph()
-    tec[sat].loadData(obs, nav, sat, receiverPos, eph[sat])
+    tec[sat].loadData(obs, nav, bias, sat, receiverPos, eph[sat])
     tec[sat].getRelativeTEC(eph[sat])
     tec[sat].offsetCorrectedTEC(threshold=math.radians(20))
     tec[sat].getVerticalTEC()
@@ -99,6 +99,7 @@ for sat in satellites:
             plt.ylabel('TECU') 
             plt.setp(axes.get_xticklabels(), rotation = 35)
             plt.show()
+
 #%% Sensitivity analysis
 x_dif = []
 y_dif = []
